@@ -1,34 +1,54 @@
 package database
 
-// import (
-// 	"database/sql"
-// 	"github.com/google/uuid"
-// )
+import (
+	"database/sql"
 
-// type Course struct {
-// 	db          *sql.DB
-// 	ID          string
-// 	Name        string
-// 	Description string
-// 	Category    *Category
-// }
+	"github.com/google/uuid"
+)
 
-// func NewCourse(db *sql.DB) *Course {
-// 	return &Course{
-// 		db: db,
-// 	}
-// }
+type Course struct {
+	db          *sql.DB
+	ID          string
+	Name        string
+	Description string
+	CategoryID  string
+}
 
-// func (course *Course) Create(name string, description string, category Category) (Course, error) {
-// 	id := uuid.New().String()
+func NewCourse(db *sql.DB) *Course {
+	return &Course{
+		db: db,
+	}
+}
 
-// 	_, err := course.db.Exec(
-// 		"INSERT INTO COURSES (id, name, description, cours) VALUES	($1, $2, $3, $4)",
-// 		id, name, description,
-// 	)
+func (course *Course) Create(name string, description string, categoryID string) (Course, error) {
+	id := uuid.New().String()
 
-// 	if err != nil {
-// 		return Course{}, err
-// 	}
-// 	return Course{ID: id, Name: name, Description: description, Category: &category}, nil
-// }
+	_, err := course.db.Exec(
+		"INSERT INTO COURSES (id, name, description, category_id) VALUES ($1, $2, $3, $4)",
+		id, name, description, categoryID,
+	)
+
+	if err != nil {
+		return Course{}, err
+	}
+	return Course{ID: id, Name: name, Description: description, CategoryID: categoryID}, nil
+}
+
+func (course *Course) FindAll() ([]Course, error) {
+	rows, err := course.db.Query("SELECT id, name, description, category_id from COURSES")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var courses []Course
+
+	for rows.Next() {
+		var id, name, description, categoryID string
+		if err := rows.Scan(&id, &name, &description, &categoryID); err != nil {
+			return courses, err
+		}
+		courses = append(courses, Course{ID: id, Name: name, Description: description, CategoryID: categoryID})
+	}
+	return courses, nil
+}
